@@ -1,4 +1,6 @@
 class VotesController < ApplicationController
+  skip_before_filter :verify_authenticity_token, :only => [:vote]
+
   def vote
     begin
       uid = params[:uid]
@@ -43,14 +45,17 @@ class VotesController < ApplicationController
                                 uid
                                ])
       user = nil
-      puts "QUERY: " + query.count.to_s
+      my_vote = ""
+
       if query.count > 0
         user = query[0]
+        my_vote = user.vote
       else
         user = User.new
         user.uid = uid
       end
 
+      my_vote ||= ""
       user.last_seen = Time.now
 
       if !user.save
@@ -71,7 +76,8 @@ class VotesController < ApplicationController
         votes[s.vote] = s.vote_count
       end
       
-      render :json => {"status" => "success", "standings" => votes}
+      
+      render :json => {"status" => "success", "standings" => votes, "my_vote" => my_vote}
       return
     rescue
       render :json => {"status" => "error"}
